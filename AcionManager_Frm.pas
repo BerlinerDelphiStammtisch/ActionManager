@@ -248,6 +248,7 @@ begin
 
   CmB_FileFilter.Items.Add('doc');
   CmB_FileFilter.Items.Add('pdf');
+  CmB_FileFilter.Items.Add('xls');
   CmB_FileFilter.ItemIndex := 0;
 end;
 
