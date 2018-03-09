@@ -181,12 +181,16 @@ end;
 
 procedure TFrm_ActionManager.Btn_ReloadClick(Sender: TObject);
 begin
+  {-- Einschränkungen aufheben --}
   CmB_ActionCategory.ItemIndex:=-1;
   Edt_ActionCategory.Text:=EmptyStr;
   Edt_SearchName.Text:=EmptyStr;
+  {-- Kollektion und Formularelemente leer machen --}
   FActionManager.Actions.FreeAll;
   FActionManager.ActCategories.Clear;
+  {-- Daten holen --}
   FActionManager.ReadActions(CAM_FldActName);
+  {-- Formularelemente neu füllen --}
   SetActionsToForm(FActionManager.Actions);
   SetCategoriesToForm;
 end;
