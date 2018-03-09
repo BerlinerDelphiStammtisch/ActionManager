@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.401,C:\DQ\AT\ActionManager\AcionManager_Frm.fmx=C:\DQ\AT\ActionManager\AcionManagerFM_Frm.fmx</Transaction>
     <Transaction>1899.12.30 00:00:00.000.929,C:\DQ\AT\ActionManager\Lib\Obj_TableRecord.pas=</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.608,D:\ActionManager\Lib\Obj_TableRecord.pas=D:\ActionManager\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.635,=D:\ActionManager\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.824,C:\DQ\AT\ActionManager\ActionEditFM.fmx=C:\DQ\AT\ActionManager\ActionEdit.fmx</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.401,C:\DQ\AT\ActionManager\AcionManagerFM_Frm.fmx=C:\DQ\AT\ActionManager\AcionManager_Frm.fmx</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.824,C:\DQ\AT\ActionManager\ActionEdit.fmx=C:\DQ\AT\ActionManager\ActionEditFM.fmx</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.767,C:\DQ\AT\ActionManager\AcionManagerFM_Frm.pas=C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.767,C:\DQ\AT\ActionManager\AcionManagerFM_Frm.fmx=C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Unit1.fmx</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.824,C:\DQ\AT\ActionManager\ActionEdit.pas=C:\DQ\AT\ActionManager\ActionEditFM.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.861,C:\DQ\AT\ActionManager\ActionEdit.pas=</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.401,C:\DQ\AT\ActionManager\AcionManagerFM_Frm.pas=C:\DQ\AT\ActionManager\AcionManager_Frm.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.767,C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Unit1.pas=C:\DQ\AT\ActionManager\AcionManagerFM_Frm.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.902,C:\DQ\AT\ActionManager\ActionManagerFM.dproj=C:\DQ\AT\ActionManager\ActionManager.dproj</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.595,C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Project1.dproj=C:\DQ\AT\ActionManager\ActionManagerFM.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.595,C:\DQ\AT\ActionManager\ActionManagerFM.dproj=C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Project1.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.902,C:\DQ\AT\ActionManager\ActionManager.dproj=C:\DQ\AT\ActionManager\ActionManagerFM.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.401,C:\DQ\AT\ActionManager\AcionManager_Frm.pas=C:\DQ\AT\ActionManager\AcionManagerFM_Frm.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.551,=C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.824,C:\DQ\AT\ActionManager\ActionEditFM.pas=C:\DQ\AT\ActionManager\ActionEdit.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.767,C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Unit1.fmx=C:\DQ\AT\ActionManager\AcionManagerFM_Frm.fmx</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.635,=D:\ActionManager\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.608,D:\ActionManager\Unit1.pas=D:\ActionManager\Lib\Obj_TableRecord.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.353,=C:\Users\anderst\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
   </Transactions>
 	<ActiveMobileDevice>

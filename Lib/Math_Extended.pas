@@ -2,8 +2,7 @@ unit Math_Extended;  {Mathe}
 
 interface
 
-uses {Delphi} WinTypes, WinProcs, Math, SysUtils, Types,
-     {Utils}  G3_TC;
+uses {Delphi} WinTypes, WinProcs, Math, SysUtils, Types;
 
 
 function BitSet(a,n:Byte):boolean;

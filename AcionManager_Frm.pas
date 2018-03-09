@@ -220,7 +220,7 @@ procedure TFrm_ActionManager.FormCreate(Sender: TObject);
 begin
   {Objekte erstellen}
   FActionManager:=TActionManager.Create;
-  {Datenbank öffnen}
+  {Datenbank öffnen, die Datenbank wird mit dem Programmnamen im Programmverzeichnis erwartet}
   FActionManager.ActionManagerDB.DBOpen(Format(CConnectMDB,[ChangeFileExt(ParamStr(0),'.mdb')]));
 
   {Einstellungen von letzter Sitzung einlesen und setzen}

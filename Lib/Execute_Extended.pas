@@ -1,7 +1,5 @@
 unit Execute_Extended;  {Funktionen für Dateihandling}
 
-{$I COMP_OPT.INC}
-
 interface
 
 uses {Delphi} WinProcs, SysUtils, Vcl.Dialogs, Vcl.Forms,

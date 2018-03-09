@@ -1,7 +1,5 @@
 unit Obj_Properties;
 
-{$I COMP_OPT.INC}
-
 interface
 
 uses SysUtils, Classes,
