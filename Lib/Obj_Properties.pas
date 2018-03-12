@@ -79,8 +79,8 @@ begin
   for I:=0 to Count-1 do
   begin
     P:=At(I);
-    if (P.Typ='C') or (P.Typ='M') then P.Value:=EmptyStr;
-    if (P.Typ='N') or (P.Typ='D') or (P.Typ='S') then P.Value:='';
+    if P.IsString then P.Value:=EmptyStr;
+    if (P.IsNumeric) or (P.IsDate) or (P.IsTimeStamp) then P.Value:='';
   end;
 end;
 
