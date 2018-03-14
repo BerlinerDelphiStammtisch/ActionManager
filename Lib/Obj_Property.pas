@@ -24,10 +24,12 @@ type
          Name,
          Typ,
          Value : string;
+         Len,
          Dec : integer;
          Opt : int32;
          procedure Assign(AProperty: TKUO_Property);
-         function ValueVariant: variant;
+         function ValueVariant: variant; overload;
+         procedure ValueVariant(AVar: variant); overload;
 
          property IsNULL : boolean read GetIsNULL;
          property HasValue : boolean read GetHasValue;
@@ -128,6 +130,22 @@ begin
   if (Typ='S') then Result:=ESO_GetDateTimeFromGeODinString(Value);
 
   if (Typ='L') then Result:=Value='true';
+end;
+
+procedure TKUO_Property.ValueVariant(AVar: variant);
+begin
+  if (Typ='C') or (Typ='M') then Value:=AVar;
+  if (Typ='N') then
+  begin
+    if (Typ='N') and (Dec=0) then Value:=IntToStr(AVar);
+    if (Typ='N') and (Dec>0) then Value:=FloatToStrF(AVar,ffFixed,Len,Dec);
+  end;
+  //if (Typ='D') then Result:=ES_GetDateFromIntDateString(Value);
+  //if (Typ='S') then Result:=ESO_GetDateTimeFromGeODinString(Value);
+
+  if (Typ='L') then if AVar then Value:='true'
+                            else Value:='false';
+
 end;
 
 end.

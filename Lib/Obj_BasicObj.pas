@@ -51,6 +51,8 @@ type
 
          function HasProperty(AName: string): boolean;
          function GetPropertyByName(AName: string): string; overload;
+         function GetValue(AProperty: string): variant;
+         procedure SetValue(AProperty: string; AVar: variant);
          function GetPropertyByName(AName: string; var ATyp: string): string; overload;
          procedure SetPropertyByName(AName,AValue: string);
          procedure SetPropertyByIndex(AIndex: integer; AValue: string);
@@ -62,6 +64,7 @@ type
          function SameTypAndProperty(AnObject: TKUO_BasicObj; APropertyName: string): boolean;
          function SatisfiesConditions(AConditions: TStringList): boolean;
          function GetFormatstring(AFormatString: string; APropertyList: TStrings): string;
+         function GetFormatVariablesString(AFormatString: string): string;
          {GetSQLSet liefert Set an Feldnamen und Placeholdern für ein Update-Statement}
          function GetSQLSet(AForUpdate: boolean): string;
          function GetParentWhere: string;
@@ -84,7 +87,7 @@ const C_YearOfDate = '%DATE_YEAR';
 
 implementation
 
-uses System.DateUtils, String_Extended, Math_Extended{, Iv_TcSQL};
+uses System.DateUtils, String_Extended, Math_Extended;
 
 const C_WildCard_Multi  = '*';
       C_WildCard_Single = '_';
@@ -263,6 +266,10 @@ var I : integer;
     P : TKUO_Property;
 begin
   FProperties.FreeAll;
+
+  if ATableStructureEntries = nil then
+    Exit;
+
   for I:=0 to ATableStructureEntries.Count-1 do
   begin
     T:=ATableStructureEntries.At(I);
@@ -270,6 +277,7 @@ begin
     P.Desc:=T.FldName;
     P.Name:=T.FldLong;
     P.Typ:=T.FldType;
+    P.Len:=T.FldUnits1;
     P.Dec:=T.FldUnits2;
     {Option komplett übernehmen, keine Auswertung}
     P.Opt:=T.FldOpt;
@@ -350,6 +358,37 @@ begin
     if P.Desc=AName then
     begin
       Result:=P.Value;
+      Exit;
+    end;
+  end;
+end;
+
+function TKUO_BasicObj.GetValue(AProperty: string): variant;
+var I : integer;
+    P : TKUO_Property;
+begin
+  Result:=EmptyStr;
+  for I:=0 to FProperties.Count-1 do
+  begin
+    P:=FProperties.At(I);
+    if P.Desc=AProperty then
+    begin
+      Result:=P.ValueVariant;
+      Exit;
+    end;
+  end;
+end;
+
+procedure TKUO_BasicObj.SetValue(AProperty: string; AVar: variant);
+var I : integer;
+    P : TKUO_Property;
+begin
+  for I:=0 to FProperties.Count-1 do
+  begin
+    P:=FProperties.At(I);
+    if P.Desc=AProperty then
+    begin
+      P.ValueVariant(AVar);
       Exit;
     end;
   end;
@@ -586,6 +625,38 @@ begin
   end;
 end;
 
+function TKUO_BasicObj.GetFormatVariablesString(AFormatString: string): string;
+var I : integer;
+    P : TKUO_Property;
+    S : string;
+    R : real;
+    Z : integer;
+    D : TDateTime;
+begin
+  Result:=AFormatString;
+  for I := 0 to Properties.Count - 1 do
+  begin
+    P:=Properties.At(I);
+    if Result.Contains(ES_InDollar(P.Desc)) then
+    begin
+      if P.IsString then S:=P.ValueVariant
+        else if P.IsReal then begin
+                                R:=P.ValueVariant;
+                                S:=FloatToStrF(R,ffNumber,P.Len,P.Dec);
+                               end
+          else if P.IsDate then begin
+                                  D:=P.ValueVariant;
+                                  S:=DateToStr(D);
+                                end
+            else if P.IsInteger then begin
+                                       Z:=P.ValueVariant;
+                                       S:=IntToStr(Z);
+                                     end;
+
+      Result:=StringReplace(Result,ES_InDollar(P.Desc),S,[]);
+    end;
+  end;
+end;
 function TKUO_BasicObj.GetCollection(AName: string): TCollection_BasicObjects;
 var I : integer;
     BasicObjColl: TCollection_BasicObjects;
