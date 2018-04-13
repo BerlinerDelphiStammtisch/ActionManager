@@ -1,0 +1,6 @@
+These statistics cover the official repository of Lina Components.
+
+Total lines of code (LoC): 18400+
+Total visual components (VC): 22
+
+Sample projects and other 3rd-party code are not included.

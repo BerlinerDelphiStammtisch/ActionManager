@@ -1,0 +1,8 @@
+* Section 1
+; Line comment
+1 = One
+2 = Two      ; Inline comment
+3 = Three
+* Section 2
+4 = Four
+5 = Five
