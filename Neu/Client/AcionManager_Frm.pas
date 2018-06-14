@@ -1,4 +1,3 @@
-<<<<<<< HEAD:AcionManager_Frm.pas
 unit AcionManager_Frm;
 
 interface
