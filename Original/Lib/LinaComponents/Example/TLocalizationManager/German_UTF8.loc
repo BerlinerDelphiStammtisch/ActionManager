@@ -1,0 +1,9 @@
+; No-section content
+HelloWorld = Hallo, $# 10 Welt! ; MessageBox variable
+Language = Sprache
+LanguageSelect @ LANGUAGE
+* Buttons
+Close = Schliessen
+Hello = Hallo!
+* Other
+Coding = Kodierung

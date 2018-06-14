@@ -1,0 +1,73 @@
+package LINA_D_XE5;
+
+{$R *.res}
+{$R '..\..\Resource\Compiled\LINA.dcr'}
+{$R '..\..\Resource\Compiled\uAdvCtrls.dcr'}
+{$R '..\..\Resource\Compiled\uCalc.dcr'}
+{$R '..\..\Resource\Compiled\uSysCtrls.dcr'}
+{$R '..\..\Resource\Compiled\uFileCtrls.dcr'}
+{$R '..\..\Resource\Compiled\uFrmCtrls.dcr'}
+{$R '..\..\Resource\Compiled\uLocalMgr.dcr'}
+{$R '..\..\Resource\Compiled\uScriptMgr.dcr'}
+{$R '..\..\Resource\Compiled\uVirtObj.dcr'}
+{$R '..\..\Resource\Compiled\uWebCtrls.dcr'}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'Lina Components'}
+{$IMPLICITBUILD ON}
+{$DEFINE PACKAGE}
+{$I '..\..\Source\Config.inc'}
+{$UNDEF PACKAGE}
+
+requires
+  rtl
+  ,vcl
+  ,vclx
+  {$IFDEF ADD_DEPENDENCIES}
+    ,PascalScript_Core_D19
+    ,IndySystem
+    ,IndyProtocols
+    ,IndyCore
+  {$ENDIF}
+  ;
+
+contains
+  uBase in '..\..\Source\uBase.pas',
+  uSysCtrls in '..\..\Source\uSysCtrls.pas',
+  uFileTools in '..\..\Source\uFileTools.pas',
+  uFrmCtrls in '..\..\Source\uFrmCtrls.pas',
+  uLocalMgr in '..\..\Source\uLocalMgr.pas',
+  {$IFDEF ADD_DEPENDENCIES}
+    uScriptMgr in '..\..\Source\uScriptMgr.pas',
+  {$ENDIF}
+  uSysTools in '..\..\Source\uSysTools.pas',
+  uVirtObj in '..\..\Source\uVirtObj.pas',
+  uAdvCtrls in '..\..\Source\uAdvCtrls.pas',
+  uWebCtrls in '..\..\Source\uWebCtrls.pas',
+  uFileCtrls in '..\..\Source\uFileCtrls.pas',
+  uInit in '..\..\Source\uInit.pas',
+  uCalc in '..\..\Source\uCalc.pas';
+
+end.
