@@ -251,6 +251,7 @@ begin
   RdB_All.IsChecked := true;
 
   CmB_FileFilter.Items.Add('doc');
+  CmB_FileFilter.Items.Add('exe');
   CmB_FileFilter.Items.Add('pdf');
   CmB_FileFilter.Items.Add('xls');
   CmB_FileFilter.ItemIndex := 0;
