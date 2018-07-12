@@ -103,7 +103,11 @@ begin
     if WebRequestHandler <> nil then
       WebRequestHandler.WebModuleClass := WebModuleClass;
     WebRequestHandlerProc.MaxConnections := 1024;
+    Writeln('Call:');
+    Writeln('http://localhost:54711/');
+    Writeln('');
     RunServer(54711);
+    //http://localhost:54711/
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);

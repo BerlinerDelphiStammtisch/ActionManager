@@ -6,6 +6,9 @@ uses
   MVCFramework, MVCFramework.Commons,
   uActionManDatenModul;
 
+const
+  cVersion = '1.0.0.0';
+
 type
 
   [MVCPath('/')]
@@ -104,7 +107,7 @@ end;
 procedure TActionManController.Index;
 begin
   //use Context property to access to the HTTP request and response
-  Render('Willkommen beim Delphi-Stammtisch-Berlin Action-Manager');
+  Render('Willkommen beim Delphi-Stammtisch-Berlin Action-Manager. <br/>Version '+cVersion);
 end;
 
 procedure TActionManController.GetReversedString(const Value: String);
