@@ -107,7 +107,7 @@ end;
 procedure TActionManController.Index;
 begin
   //use Context property to access to the HTTP request and response
-  Render('Willkommen beim Delphi-Stammtisch-Berlin Action-Manager. <br/>Version '+cVersion);
+  Render('Willkommen beim Delphi-Stammtisch-Berlin Action-Manager. Version '+cVersion);
 end;
 
 procedure TActionManController.GetReversedString(const Value: String);
