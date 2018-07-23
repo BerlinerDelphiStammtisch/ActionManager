@@ -1,3 +1,6 @@
 [submodule "Lib/LinaComponents"]
 	path = Lib/LinaComponents
 	url = https://bitbucket.org/Dennis07/lina-components
+[submodule "Lib/DelphiMVCFramework"]
+	path = Lib/DelphiMVCFramework
+	url = https://github.com/danieleteti/delphimvcframework.git

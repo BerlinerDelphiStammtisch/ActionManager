@@ -1,10 +1,13 @@
 unit uActionManController;
-
+//
 interface
 
 uses
   MVCFramework, MVCFramework.Commons,
   uActionManDatenModul;
+
+const
+  cVersion = '1.0.0.0';
 
 type
 
@@ -104,7 +107,7 @@ end;
 procedure TActionManController.Index;
 begin
   //use Context property to access to the HTTP request and response
-  Render('Willkommen beim Delphi-Stammtisch-Berlin Action-Manager');
+  Render('Willkommen beim Delphi-Stammtisch-Berlin Action-Manager. Version '+cVersion);
 end;
 
 procedure TActionManController.GetReversedString(const Value: String);
