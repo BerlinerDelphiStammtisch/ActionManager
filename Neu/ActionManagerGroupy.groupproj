@@ -6,6 +6,9 @@
         <Projects Include="Client\ActionManager.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="RESTClient\vclclient\ActionManClient.dproj">
+            <Dependencies/>
+        </Projects>
         <Projects Include="RESTServer\ActionManRESTserver.dproj">
             <Dependencies/>
         </Projects>
@@ -26,6 +29,15 @@
     <Target Name="ActionManager:Make">
         <MSBuild Projects="Client\ActionManager.dproj" Targets="Make"/>
     </Target>
+    <Target Name="ActionManClient">
+        <MSBuild Projects="RESTClient\vclclient\ActionManClient.dproj"/>
+    </Target>
+    <Target Name="ActionManClient:Clean">
+        <MSBuild Projects="RESTClient\vclclient\ActionManClient.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ActionManClient:Make">
+        <MSBuild Projects="RESTClient\vclclient\ActionManClient.dproj" Targets="Make"/>
+    </Target>
     <Target Name="ActionManRESTserver">
         <MSBuild Projects="RESTServer\ActionManRESTserver.dproj"/>
     </Target>
@@ -36,13 +48,13 @@
         <MSBuild Projects="RESTServer\ActionManRESTserver.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="ActionManager;ActionManRESTserver"/>
+        <CallTarget Targets="ActionManager;ActionManClient;ActionManRESTserver"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="ActionManager:Clean;ActionManRESTserver:Clean"/>
+        <CallTarget Targets="ActionManager:Clean;ActionManClient:Clean;ActionManRESTserver:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="ActionManager:Make;ActionManRESTserver:Make"/>
+        <CallTarget Targets="ActionManager:Make;ActionManClient:Make;ActionManRESTserver:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
