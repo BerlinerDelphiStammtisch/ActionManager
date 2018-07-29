@@ -16,7 +16,12 @@ uses
   FireDAC.Phys.MSAcc, FMX.ImgList,
   {ActionManager-OBjekte}
   Obj_ActionManager, Obj_Action, Obj_ActionOption,
-  Collection_BasicObjects ;
+  Collection_BasicObjects,
+  {REST}
+  MVCFramework.RESTClient, FMX.ScrollBox, FMX.Memo,
+  FireDAC.Stan.Option,
+  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
+  FireDAC.DApt.Intf, Data.DB, FireDAC.Comp.DataSet, FireDAC.Comp.Client;
 
 type
   TFrm_ActionManager = class(TForm)
@@ -56,6 +61,15 @@ type
     Lab_LastCall: TLabel;
     Lab_CallCount: TLabel;
     CmB_FileFilter: TComboBox;
+    FDMemTable1: TFDMemTable;
+    FDMemTable1id: TIntegerField;
+    FDMemTable1name: TStringField;
+    FDMemTable1year: TStringField;
+    FDMemTable1grapes: TStringField;
+    FDMemTable1country: TStringField;
+    FDMemTable1action_callcnt: TIntegerField;
+    FDMemTable1d: TDateTimeField;
+    FDMemTable1d2: TDateTimeField;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure CmB_ActionCategoryChange(Sender: TObject);
@@ -85,6 +99,8 @@ type
     procedure Act_ActionNewExecute(Sender: TObject);
     procedure CmB_FileFilterChange(Sender: TObject);
   private
+    RESTClient: TRESTClient;
+    Loading: Boolean;
     FActionManager : TActionManager;
     procedure StartExplorer(APath: string);
     procedure SetActionsToForm(AActionCollection: TCollection_BasicObjects);
@@ -93,6 +109,7 @@ type
     procedure GetCategoryFromForm(ASearch: TAM_Action);
     procedure int_AddAction(AName,ACategory,ACall,AType: string);
     procedure int_SetCategoryFromEdit;
+    procedure int_LoadFromRest;
   protected
   end;
 
@@ -104,7 +121,8 @@ implementation
 {$R *.fmx}
 {$R *.XLgXhdpiTb.fmx ANDROID}
 
-uses ActionEdit;
+uses ActionEdit,
+     MVCFramework.DataSet.Utils;
 
 const CConnectMDB = 'DriverID=MSAcc;Database=%s';
       CProgName   = 'Action-Manager';
@@ -255,6 +273,8 @@ begin
   CmB_FileFilter.Items.Add('pdf');
   CmB_FileFilter.Items.Add('xls');
   CmB_FileFilter.ItemIndex := 0;
+
+  RESTClient := TRESTClient.Create('localhost', 54711);
 end;
 
 procedure TFrm_ActionManager.FormDestroy(Sender: TObject);
@@ -265,6 +285,8 @@ begin
   FActionManager.SaveOptions(Category,Edt_SearchName.Text);
   FActionManager.ActionManagerDB.DBClose;
   FreeAndNil(FActionManager);
+  {}
+  RESTClient.free;
 end;
 
 procedure TFrm_ActionManager.FormKeyDown(Sender: TObject; var Key: Word;
@@ -272,6 +294,7 @@ procedure TFrm_ActionManager.FormKeyDown(Sender: TObject; var Key: Word;
 begin
   if (chr(Key)='F') and (ssCtrl in Shift) then Edt_SearchName.SetFocus;
   if (chr(Key)='K') and (ssCtrl in Shift) then Edt_ActionCategory.SetFocus;
+  if (chr(Key)='T') and (ssCtrl in Shift) then int_LoadFromRest;
 end;
 {$EndRegion}
 
@@ -462,6 +485,24 @@ begin
       Exit;
     end;
   end;
+end;
+
+procedure TFrm_ActionManager.int_LoadFromRest;
+var Response: IRESTResponse;
+begin
+  {REST}
+  {Die Memtable ist schon strukturell designed und hat die Tabellenstruktur wie
+   die Datenbank. Das gelieferte JSON geht da perfekt rein.
+   Noch besser wäre die Objekte gleich aus dem JSON zu erstellen.}
+  Response := RESTClient.doGET('/actions', []);
+  FDMemTable1.Close;
+  FDMemTable1.Open;
+  Loading := True;
+  FDMemTable1.AppendFromJSONArrayString(Response.BodyAsString);
+  Loading := False;
+  {}
+  FActionManager.ReadActionsREST(FDMemTable1);
+  SetActionsToForm(FActionManager.Actions);
 end;
 {$EndRegion}
 

@@ -140,8 +140,16 @@ begin
     if (Typ='N') and (Dec=0) then Value:=IntToStr(AVar);
     if (Typ='N') and (Dec>0) then Value:=FloatToStrF(AVar,ffFixed,Len,Dec);
   end;
-  //if (Typ='D') then Result:=ES_GetDateFromIntDateString(Value);
-  //if (Typ='S') then Result:=ESO_GetDateTimeFromGeODinString(Value);
+  if (Typ='D') then
+  begin
+    if AVar>0 then Value:=ES_GetIntDateStringFromDate(AVar)
+              else Value:=EmptyStr;
+  end;
+  if (Typ='S') then
+  begin
+    if AVar>0 then Value:=ESO_GetGeODinDateTimeStringFromDate(AVar)
+              else Value:=EmptyStr;
+  end;
 
   if (Typ='L') then if AVar then Value:='true'
                             else Value:='false';

@@ -4,7 +4,8 @@ interface
 
 uses System.SysUtils, Classes, Winapi.Windows,
      DBStrukturen, Collection_BasicObjects,
-     GeneralDB_FDC, Obj_Action;
+     GeneralDB_FDC, Obj_Action,
+     FireDAC.Comp.Client;
 
 type
     TActionManager = class(TObject)
@@ -20,6 +21,7 @@ type
         destructor Destroy; override;
         procedure CheckStruktur;
         procedure ReadActions(ASortField: string);
+        procedure ReadActionsREST(AFDMemTable: TFDMemTable);
         procedure ReadActOptions(ASortField: string);
         function GetLastCategory: string;
         function GetLastName: string;
@@ -35,7 +37,7 @@ type
 
 implementation
 
-uses Execute_Extended, Obj_ActionOption;
+uses Execute_Extended, Obj_Property, Obj_ActionOption;
 
 constructor TActionManager.Create;
 begin
@@ -101,6 +103,31 @@ begin
     ActionObj:=Actions.At(I);
     if ActCategories.IndexOf(ActionObj.ActionCategory)=-1 then
       ActCategories.Add(ActionObj.ActionCategory);
+  end;
+end;
+
+procedure TActionManager.ReadActionsREST(AFDMemTable: TFDMemTable);
+var ActionObj : TAM_Action;
+    Prop : TKUO_Property;
+    I : integer;
+begin
+  Actions.FreeAll;
+  AFDMemTable.First;
+  while not AFDMemTable.Eof do
+  begin
+    ActionObj:=TAM_Action.Create(CAM_Actions,Strukturen.GetTabStr(CAM_Actions).Structure);
+    for I := 0 to ActionObj.Properties.Count-1 do
+    begin
+      Prop := ActionObj.Properties.At(I);
+      if Prop.IsInteger then
+        ActionObj.SetValue(Prop.Desc,AFDMemTable.FindField(Prop.Desc).AsInteger);
+      if Prop.IsString then
+        ActionObj.SetValue(Prop.Desc,AFDMemTable.FindField(Prop.Desc).AsString);
+      if Prop.IsTimeStamp then
+        ActionObj.SetValue(Prop.Desc,AFDMemTable.FindField(Prop.Desc).AsDateTime);
+    end;
+    Actions.Insert(ActionObj);
+    AFDMemTable.Next;
   end;
 end;
 
