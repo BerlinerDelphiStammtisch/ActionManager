@@ -98,10 +98,13 @@ type
     procedure Act_ActionExecuteExecute(Sender: TObject);
     procedure Act_ActionNewExecute(Sender: TObject);
     procedure CmB_FileFilterChange(Sender: TObject);
+    procedure FDMemTable1BeforePost(DataSet: TDataSet);
   private
     RESTClient: TRESTClient;
     Loading: Boolean;
     FActionManager : TActionManager;
+    FModusLocalDB : boolean;
+    FModusREST : boolean;
     procedure StartExplorer(APath: string);
     procedure SetActionsToForm(AActionCollection: TCollection_BasicObjects);
     procedure SetCategoriesToForm;
@@ -189,10 +192,26 @@ begin
 
   ActionObj:=FActionManager.Actions.At(ActionItem.Tag);
 
+  if FModusLocalDB then
   if Dlg_ActionEdit(ActionObj,false) then
   begin
     FActionManager.ActionManagerDB.QUERY_SaveObject(CAM_Actions,ActionObj);
     ActionItem.Text:=ActionObj.ActionName;
+  end;
+
+  if FModusREST then
+  if Dlg_ActionEdit(ActionObj,false) then
+  begin
+    FDMemTable1.First;
+    while not FDMemTable1.Eof do
+    begin
+      if FDMemTable1.Fields[0].AsInteger = ActionObj.Ident then
+        break;
+      FDMemTable1.Next
+    end;
+    FDMemtable1.Edit;
+    FDMemtable1.Fields[1].AsString := ActionObj.ActionName;
+    FDMemtable1.Post;
   end;
 end;
 {$EndRegion}
@@ -208,6 +227,8 @@ begin
   FActionManager.ActCategories.Clear;
   {-- Daten holen --}
   FActionManager.ReadActions(CAM_FldActName);
+  FModusLocalDB := true;
+  FModusREST := false;
   {-- Formularelemente neu füllen --}
   SetActionsToForm(FActionManager.Actions);
   SetCategoriesToForm;
@@ -234,6 +255,22 @@ begin
 end;
 
 {$Region '--------------------------- Formularmethoden -----------------------------------'}
+procedure TFrm_ActionManager.FDMemTable1BeforePost(DataSet: TDataSet);
+var
+  Resp: IRESTResponse;
+begin
+  if Loading then
+    Exit;
+  case FDMemTable1.State of
+    dsEdit:
+      Resp := RESTClient.DataSetUpdate('/actions', FDMemTable1, FDMemTable1id.AsString);
+    dsInsert:
+      Resp := RESTClient.DataSetInsert('/actions', FDMemTable1);
+  end;
+  if not Resp.ResponseCode in [200, 201] then
+    raise Exception.Create(Resp.ResponseText);
+end;
+
 procedure TFrm_ActionManager.FormCreate(Sender: TObject);
 begin
   {Objekte erstellen}
@@ -248,6 +285,8 @@ begin
 
   {Aus DB lesen, in Formularelemente bringen}
   FActionManager.ReadActions(CAM_FldActName);
+  FModusLocalDB := true;
+  FModusREST := false;
   SetCategoriesToForm;
   int_SetCategoryFromEdit;
   SetActionsToForm(FActionManager.Actions);
@@ -502,6 +541,8 @@ begin
   Loading := False;
   {}
   FActionManager.ReadActionsREST(FDMemTable1);
+  FModusLocalDB := false;
+  FModusREST := true;
   SetActionsToForm(FActionManager.Actions);
 end;
 {$EndRegion}
