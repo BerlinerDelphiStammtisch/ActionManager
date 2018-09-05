@@ -2,14 +2,19 @@ unit Obj_ActionManager;
 
 interface
 
-uses System.SysUtils, Classes, Winapi.Windows,
+uses System.SysUtils, Classes, Winapi.Windows, DB,
      DBStrukturen, Collection_BasicObjects,
      GeneralDB_FDC, Obj_Action,
+     MVCFramework.RESTClient,
      FireDAC.Comp.Client;
 
 type
     TActionManager = class(TObject)
       private
+        FDMemTable1: TFDMemTable;
+        FRESTClient: TRESTClient;
+        FLoading: Boolean;
+        procedure FDMemTable1BeforePost(DataSet: TDataSet);
       public
         ActionManagerDB : TGeneralDB;
         Strukturen : TDB_Strukturen;
@@ -20,6 +25,7 @@ type
         constructor Create;
         destructor Destroy; override;
         procedure CheckStruktur;
+        procedure LoadFromREST;
         procedure ReadActions(ASortField: string);
         procedure ReadActionsREST(AFDMemTable: TFDMemTable);
         procedure ReadActOptions(ASortField: string);
@@ -29,15 +35,19 @@ type
         function  Action_CreateNew(AName,ACategory,ACall,AType : string): TAM_Action;
         procedure Action_InsertNew(AAction: TAM_Action);
         procedure Action_CallExecuted(AAction: TAM_Action);
+        procedure Action_SaveAction(AAction: TAM_Action);
 
         function CheckFileExists(AFileName: string): boolean;
         procedure StartExecuteFile(AFileName: string; AParameter:string='');
         procedure StartExplorer(APath: string);
+
+        property ActionTable : TFDMemTable read FDMemTable1;
+        property RESTClient: TRESTClient read FRESTClient;
     end;
 
 implementation
 
-uses Execute_Extended, Obj_Property, Obj_ActionOption;
+uses Execute_Extended, Obj_Property, Obj_ActionOption, MVCFramework.DataSet.Utils;
 
 constructor TActionManager.Create;
 begin
@@ -49,6 +59,57 @@ begin
   Register_ActOption(Strukturen);
   ActCategories:=TStringList.Create;
   ActCategories.Sorted:=true;
+
+  FDMemTable1 := TFDMemTable.Create(nil);
+  FDMemTable1.BeforePost := FDMemTable1BeforePost;
+  with FDMemTable1.FieldDefs do
+  begin
+    with AddFieldDef do
+    begin
+      Name := 'ident';
+      DataType := ftInteger;
+    end;
+    with AddFieldDef do
+    begin
+      Name := 'action_name';
+      DataType := ftString;
+      Size := 254;
+    end;
+    with AddFieldDef do
+    begin
+      Name := 'action_call';
+      DataType := ftString;
+      Size := 254;
+    end;
+    with AddFieldDef do
+    begin
+      Name := 'action_type';
+      DataType := ftString;
+      Size := 50;
+    end;
+    with AddFieldDef do
+    begin
+      Name := 'action_category';
+      DataType := ftString;
+      Size := 254;
+    end;
+    with AddFieldDef do
+    begin
+      Name := 'action_created';
+      DataType := ftDateTime;
+    end;
+    with AddFieldDef do
+    begin
+      Name := 'action_lastcall';
+      DataType := ftDateTime;
+    end;
+    with AddFieldDef do
+    begin
+      Name := 'action_callcnt';
+      DataType := ftInteger;
+    end;
+  end;
+  FRESTClient := TRESTClient.Create('localhost', 54711);
 end;
 
 destructor TActionManager.Destroy;
@@ -58,6 +119,26 @@ begin
   FreeAndNil(Actions);
   FreeAndNil(ActOptions);
   FreeAndNil(ActCategories);
+
+  FreeAndNil(FDMemTable1);
+  FreeAndNil(FRESTClient);
+end;
+
+procedure TActionManager.FDMemTable1BeforePost(DataSet: TDataSet);
+var
+  Resp: IRESTResponse;
+begin
+  if FLoading then
+    Exit;
+
+  case FDMemTable1.State of
+    dsEdit:
+      Resp := RESTClient.DataSetUpdate('/actions', FDMemTable1, FDMemTable1.Fields[0].AsString);
+    dsInsert:
+      Resp := RESTClient.DataSetInsert('/actions', FDMemTable1);
+  end;
+  if not Resp.ResponseCode in [200, 201] then
+    raise Exception.Create(Resp.ResponseText);
 end;
 
 procedure TActionManager.CheckStruktur;
@@ -82,6 +163,23 @@ begin
     ActionManagerDB.QUERY_InsertObject(CAM_ActOptions,ActOptionObj);
   end;
 
+end;
+
+procedure TActionManager.LoadFromREST;
+var Response: IRESTResponse;
+begin
+  FLoading := true;
+
+  {Die Memtable ist schon strukturell designed und hat die Tabellenstruktur wie
+   die Datenbank. Das gelieferte JSON geht da perfekt rein.
+   Noch besser wäre die Objekte gleich aus dem JSON zu erstellen.}
+  Response := FRESTClient.doGET('/actions', []);
+  FDMemTable1.Close;
+  FDMemTable1.Open;
+  FDMemTable1.AppendFromJSONArrayString(Response.BodyAsString);
+  ReadActionsREST(FDMemTable1);
+
+  FLoading := false;
 end;
 
 procedure TActionManager.ReadActions(ASortField: string);
@@ -187,6 +285,21 @@ begin
   AAction.ActionLastCall := Now;
   AAction.ActionCallCnt := AAction.ActionCallCnt + 1;
   ActionManagerDB.QUERY_SaveObject(CAM_Actions,AAction);
+end;
+
+procedure TActionManager.Action_SaveAction(AAction: TAM_Action);
+begin
+  FDMemTable1.First;
+  while not FDMemTable1.Eof do
+  begin
+    if FDMemTable1.Fields[0].AsInteger = AAction.Ident then
+      break;
+    FDMemTable1.Next
+  end;
+  FDMemtable1.Edit;
+  FDMemtable1.Fields[1].AsString := AAction.ActionName;
+  FDMemtable1.Fields[2].AsString := AAction.ActionCall;
+  FDMemtable1.Post;
 end;
 
 function TActionManager.CheckFileExists(AFileName: string): boolean;

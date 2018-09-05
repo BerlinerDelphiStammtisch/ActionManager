@@ -10,19 +10,17 @@ uses
   FMX.ListView.Types, FMX.ListView.Appearances, FMX.ListView.Adapters.Base,
   FMX.StdCtrls, FMX.Controls.Presentation, FMX.Edit, FMX.ListBox, FMX.ListView,
   FMX.Menus, FMX.DialogService, FMX.ActnList,
+  FMX.ScrollBox, FMX.Memo,
   {FireDAC}
   FireDAC.UI.Intf, FireDAC.FMXUI.Wait, FireDAC.Comp.UI,
   FireDAC.Phys.MSAccDef, FireDAC.Stan.Intf, FireDAC.Phys, FireDAC.Phys.ODBCBase,
   FireDAC.Phys.MSAcc, FMX.ImgList,
+  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
+  FireDAC.DApt.Intf, Data.DB, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+  FireDAC.Stan.Option,
   {ActionManager-OBjekte}
   Obj_ActionManager, Obj_Action, Obj_ActionOption,
-  Collection_BasicObjects,
-  {REST}
-  MVCFramework.RESTClient, FMX.ScrollBox, FMX.Memo,
-  FireDAC.Stan.Option,
-  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
-  FireDAC.DApt.Intf, Data.DB, FireDAC.Comp.DataSet, FireDAC.Comp.Client;
-
+  Collection_BasicObjects;
 type
   TFrm_ActionManager = class(TForm)
     LVw_Actions: TListView;
@@ -61,15 +59,6 @@ type
     Lab_LastCall: TLabel;
     Lab_CallCount: TLabel;
     CmB_FileFilter: TComboBox;
-    FDMemTable1: TFDMemTable;
-    FDMemTable1id: TIntegerField;
-    FDMemTable1name: TStringField;
-    FDMemTable1year: TStringField;
-    FDMemTable1grapes: TStringField;
-    FDMemTable1country: TStringField;
-    FDMemTable1action_callcnt: TIntegerField;
-    FDMemTable1d: TDateTimeField;
-    FDMemTable1d2: TDateTimeField;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure CmB_ActionCategoryChange(Sender: TObject);
@@ -98,10 +87,7 @@ type
     procedure Act_ActionExecuteExecute(Sender: TObject);
     procedure Act_ActionNewExecute(Sender: TObject);
     procedure CmB_FileFilterChange(Sender: TObject);
-    procedure FDMemTable1BeforePost(DataSet: TDataSet);
   private
-    RESTClient: TRESTClient;
-    Loading: Boolean;
     FActionManager : TActionManager;
     FModusLocalDB : boolean;
     FModusREST : boolean;
@@ -124,8 +110,7 @@ implementation
 {$R *.fmx}
 {$R *.XLgXhdpiTb.fmx ANDROID}
 
-uses ActionEdit,
-     MVCFramework.DataSet.Utils;
+uses ActionEdit;
 
 const CConnectMDB = 'DriverID=MSAcc;Database=%s';
       CProgName   = 'Action-Manager';
@@ -193,25 +178,20 @@ begin
   ActionObj:=FActionManager.Actions.At(ActionItem.Tag);
 
   if FModusLocalDB then
-  if Dlg_ActionEdit(ActionObj,false) then
   begin
-    FActionManager.ActionManagerDB.QUERY_SaveObject(CAM_Actions,ActionObj);
-    ActionItem.Text:=ActionObj.ActionName;
+    if Dlg_ActionEdit(ActionObj,false) then
+    begin
+      FActionManager.ActionManagerDB.QUERY_SaveObject(CAM_Actions,ActionObj);
+      ActionItem.Text:=ActionObj.ActionName;
+    end;
   end;
 
   if FModusREST then
-  if Dlg_ActionEdit(ActionObj,false) then
   begin
-    FDMemTable1.First;
-    while not FDMemTable1.Eof do
+    if Dlg_ActionEdit(ActionObj,false) then
     begin
-      if FDMemTable1.Fields[0].AsInteger = ActionObj.Ident then
-        break;
-      FDMemTable1.Next
+      FActionManager.Action_SaveAction(ActionObj);
     end;
-    FDMemtable1.Edit;
-    FDMemtable1.Fields[1].AsString := ActionObj.ActionName;
-    FDMemtable1.Post;
   end;
 end;
 {$EndRegion}
@@ -255,22 +235,6 @@ begin
 end;
 
 {$Region '--------------------------- Formularmethoden -----------------------------------'}
-procedure TFrm_ActionManager.FDMemTable1BeforePost(DataSet: TDataSet);
-var
-  Resp: IRESTResponse;
-begin
-  if Loading then
-    Exit;
-  case FDMemTable1.State of
-    dsEdit:
-      Resp := RESTClient.DataSetUpdate('/actions', FDMemTable1, FDMemTable1id.AsString);
-    dsInsert:
-      Resp := RESTClient.DataSetInsert('/actions', FDMemTable1);
-  end;
-  if not Resp.ResponseCode in [200, 201] then
-    raise Exception.Create(Resp.ResponseText);
-end;
-
 procedure TFrm_ActionManager.FormCreate(Sender: TObject);
 begin
   {Objekte erstellen}
@@ -313,7 +277,6 @@ begin
   CmB_FileFilter.Items.Add('xls');
   CmB_FileFilter.ItemIndex := 0;
 
-  RESTClient := TRESTClient.Create('localhost', 54711);
 end;
 
 procedure TFrm_ActionManager.FormDestroy(Sender: TObject);
@@ -325,7 +288,6 @@ begin
   FActionManager.ActionManagerDB.DBClose;
   FreeAndNil(FActionManager);
   {}
-  RESTClient.free;
 end;
 
 procedure TFrm_ActionManager.FormKeyDown(Sender: TObject; var Key: Word;
@@ -527,20 +489,10 @@ begin
 end;
 
 procedure TFrm_ActionManager.int_LoadFromRest;
-var Response: IRESTResponse;
 begin
   {REST}
-  {Die Memtable ist schon strukturell designed und hat die Tabellenstruktur wie
-   die Datenbank. Das gelieferte JSON geht da perfekt rein.
-   Noch besser wäre die Objekte gleich aus dem JSON zu erstellen.}
-  Response := RESTClient.doGET('/actions', []);
-  FDMemTable1.Close;
-  FDMemTable1.Open;
-  Loading := True;
-  FDMemTable1.AppendFromJSONArrayString(Response.BodyAsString);
-  Loading := False;
+  FActionManager.LoadFromREST;
   {}
-  FActionManager.ReadActionsREST(FDMemTable1);
   FModusLocalDB := false;
   FModusREST := true;
   SetActionsToForm(FActionManager.Actions);
