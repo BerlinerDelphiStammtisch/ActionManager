@@ -30,13 +30,13 @@ type
     procedure SetIdent(const Value: integer);
   public
     property Ident: integer read FIdent write SetIdent;
-    property ActionName: string read FActionName write SetActionName;
-    property ActionCall: string read FActionCall write SetActionCall;
-    property ActionType: string read FActionType write SetActionType;
-    property ActionCategory: string read FActionCategory write SetActionCategory;
-    property ActionCreated: TDateTime read FActionCreated write SetActionCreated;
-    property ActionLastCall: TDateTime read FActionLastCall write SetActionLastCall;
-    property ActionCallCnt: integer read FActionCallCnt write SetActionCallCnt;
+    property Action_Name: string read FActionName write SetActionName;
+    property Action_Call: string read FActionCall write SetActionCall;
+    property Action_Type: string read FActionType write SetActionType;
+    property Action_Category: string read FActionCategory write SetActionCategory;
+    property Action_Created: TDateTime read FActionCreated write SetActionCreated;
+    property Action_LastCall: TDateTime read FActionLastCall write SetActionLastCall;
+    property Action_CallCnt: integer read FActionCallCnt write SetActionCallCnt;
   end;
 
   TAMActions = class(TObjectList<TAMAction>);
