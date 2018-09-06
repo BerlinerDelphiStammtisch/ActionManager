@@ -89,8 +89,6 @@ type
     procedure CmB_FileFilterChange(Sender: TObject);
   private
     FActionManager : TActionManager;
-    FModusLocalDB : boolean;
-    FModusREST : boolean;
     procedure StartExplorer(APath: string);
     procedure SetActionsToForm(AActionCollection: TCollection_BasicObjects);
     procedure SetCategoriesToForm;
@@ -177,21 +175,10 @@ begin
 
   ActionObj:=FActionManager.Actions.At(ActionItem.Tag);
 
-  if FModusLocalDB then
+  if Dlg_ActionEdit(ActionObj,false) then
   begin
-    if Dlg_ActionEdit(ActionObj,false) then
-    begin
-      FActionManager.ActionManagerDB.QUERY_SaveObject(CAM_Actions,ActionObj);
-      ActionItem.Text:=ActionObj.ActionName;
-    end;
-  end;
-
-  if FModusREST then
-  begin
-    if Dlg_ActionEdit(ActionObj,false) then
-    begin
-      FActionManager.Action_SaveAction(ActionObj);
-    end;
+    FActionManager.Action_SaveAction(ActionObj);
+    ActionItem.Text:=ActionObj.ActionName;
   end;
 end;
 {$EndRegion}
@@ -207,8 +194,6 @@ begin
   FActionManager.ActCategories.Clear;
   {-- Daten holen --}
   FActionManager.ReadActions(CAM_FldActName);
-  FModusLocalDB := true;
-  FModusREST := false;
   {-- Formularelemente neu füllen --}
   SetActionsToForm(FActionManager.Actions);
   SetCategoriesToForm;
@@ -248,12 +233,12 @@ begin
   Edt_SearchName.Text:=FActionManager.GetLastName;
 
   {Aus DB lesen, in Formularelemente bringen}
+  FActionManager.ModusLocalDB := false;
+  FActionManager.ModusREST := true;
   FActionManager.ReadActions(CAM_FldActName);
-  FModusLocalDB := true;
-  FModusREST := false;
+  SetActionsToForm(FActionManager.Actions);
   SetCategoriesToForm;
   int_SetCategoryFromEdit;
-  SetActionsToForm(FActionManager.Actions);
 
   {Beschriftungen}
   Caption:=CProgName;
@@ -429,9 +414,9 @@ end;
 procedure TFrm_ActionManager.SetCategoriesToForm;
 var I : integer;
 begin
+  CmB_ActionCategory.Items.Clear;
   for I:=0 to FActionManager.ActCategories.Count-1 do
     CmB_ActionCategory.Items.Add(FActionManager.ActCategories[I]);
-
 end;
 
 const C_WirldCard_Multi = '*';
@@ -491,11 +476,12 @@ end;
 procedure TFrm_ActionManager.int_LoadFromRest;
 begin
   {REST}
-  FActionManager.LoadFromREST;
+  FActionManager.ModusLocalDB := false;
+  FActionManager.ModusREST := true;
+  FActionManager.ReadActions(EmptyStr);
   {}
-  FModusLocalDB := false;
-  FModusREST := true;
   SetActionsToForm(FActionManager.Actions);
+  SetCategoriesToForm;
 end;
 {$EndRegion}
 
@@ -622,8 +608,7 @@ begin
 
   if R=0 then
   begin
-    FActionManager.ActionManagerDB.QUERY_DeleteObject(CAM_Actions,ActionObj);
-    FActionManager.Actions.FreeI(ActionObj);
+    FActionManager.Action_DeleteAction(ActionObj);
     SetActionsToForm(FActionManager.Actions);
   end;
 end;

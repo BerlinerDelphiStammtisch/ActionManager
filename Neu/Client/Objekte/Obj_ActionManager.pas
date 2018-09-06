@@ -14,7 +14,11 @@ type
         FDMemTable1: TFDMemTable;
         FRESTClient: TRESTClient;
         FLoading: Boolean;
+        FModusLocalDB : boolean;
+        FModusREST : boolean;
         procedure FDMemTable1BeforePost(DataSet: TDataSet);
+        procedure FDMemTable1BeforeDelete(DataSet: TDataSet);
+        function int_MemTableFindAction(AAction: TAM_Action): boolean;
       public
         ActionManagerDB : TGeneralDB;
         Strukturen : TDB_Strukturen;
@@ -25,7 +29,6 @@ type
         constructor Create;
         destructor Destroy; override;
         procedure CheckStruktur;
-        procedure LoadFromREST;
         procedure ReadActions(ASortField: string);
         procedure ReadActionsREST(AFDMemTable: TFDMemTable);
         procedure ReadActOptions(ASortField: string);
@@ -36,11 +39,15 @@ type
         procedure Action_InsertNew(AAction: TAM_Action);
         procedure Action_CallExecuted(AAction: TAM_Action);
         procedure Action_SaveAction(AAction: TAM_Action);
+        procedure Action_DeleteAction(AAction: TAM_Action);
 
         function CheckFileExists(AFileName: string): boolean;
         procedure StartExecuteFile(AFileName: string; AParameter:string='');
         procedure StartExplorer(APath: string);
 
+
+        property ModusLocalDB: boolean read FModusLocalDB write FModusLocalDB;
+        property ModusREST : boolean read FModusREST write FModusREST;
         property ActionTable : TFDMemTable read FDMemTable1;
         property RESTClient: TRESTClient read FRESTClient;
     end;
@@ -62,6 +69,7 @@ begin
 
   FDMemTable1 := TFDMemTable.Create(nil);
   FDMemTable1.BeforePost := FDMemTable1BeforePost;
+  FDMemTable1.BeforeDelete := FDMemTable1BeforeDelete;
   with FDMemTable1.FieldDefs do
   begin
     with AddFieldDef do
@@ -141,6 +149,27 @@ begin
     raise Exception.Create(Resp.ResponseText);
 end;
 
+procedure TActionManager.FDMemTable1BeforeDelete(DataSet: TDataSet);
+var
+  Resp: IRESTResponse;
+begin
+  Resp := RESTClient.DataSetDelete('/actions', FDMemTable1.Fields[0].AsString);
+  if not Resp.ResponseCode in [200] then
+    raise Exception.Create(Resp.ResponseText);
+end;
+
+function TActionManager.int_MemTableFindAction(AAction: TAM_Action): boolean;
+begin
+  FDMemTable1.First;
+  while not FDMemTable1.Eof do
+  begin
+    if FDMemTable1.Fields[0].AsInteger = AAction.Ident then
+      Exit(true);
+    FDMemTable1.Next
+  end;
+  Result := false;
+end;
+
 procedure TActionManager.CheckStruktur;
 begin
   ActionManagerDB.TABLE_PrepareTable(CAM_Actions,Strukturen.GetTabStr(CAM_Actions));
@@ -165,42 +194,45 @@ begin
 
 end;
 
-procedure TActionManager.LoadFromREST;
-var Response: IRESTResponse;
-begin
-  FLoading := true;
-
-  {Die Memtable ist schon strukturell designed und hat die Tabellenstruktur wie
-   die Datenbank. Das gelieferte JSON geht da perfekt rein.
-   Noch besser wäre die Objekte gleich aus dem JSON zu erstellen.}
-  Response := FRESTClient.doGET('/actions', []);
-  FDMemTable1.Close;
-  FDMemTable1.Open;
-  FDMemTable1.AppendFromJSONArrayString(Response.BodyAsString);
-  ReadActionsREST(FDMemTable1);
-
-  FLoading := false;
-end;
-
 procedure TActionManager.ReadActions(ASortField: string);
 var ActionObj : TAM_Action;
+    Response: IRESTResponse;
     I : integer;
 begin
 
-  ActionManagerDB.TABLE_PrepareTable(CAM_Actions,Strukturen.GetTabStr(CAM_Actions));
+  if ModusLocalDB then
+  begin
+    ActionManagerDB.TABLE_PrepareTable(CAM_Actions,Strukturen.GetTabStr(CAM_Actions));
 
-  ActionObj:=TAM_Action.Create(CAM_Actions,Strukturen.GetTabStr(CAM_Actions).Structure);
-  try
-    ActionManagerDB.QUERY_LoadCollectionFromTab(CAM_Actions,'*','',ASortField,ActionObj,Actions);
-  finally
-    FreeAndNil(ActionObj);
+    ActionObj:=TAM_Action.Create(CAM_Actions,Strukturen.GetTabStr(CAM_Actions).Structure);
+    try
+      ActionManagerDB.QUERY_LoadCollectionFromTab(CAM_Actions,'*','',ASortField,ActionObj,Actions);
+    finally
+      FreeAndNil(ActionObj);
+    end;
+
+    for I:=0 to Actions.Count-1 do
+    begin
+      ActionObj:=Actions.At(I);
+      if ActCategories.IndexOf(ActionObj.ActionCategory)=-1 then
+        ActCategories.Add(ActionObj.ActionCategory);
+    end;
   end;
 
-  for I:=0 to Actions.Count-1 do
+  if ModusREST then
   begin
-    ActionObj:=Actions.At(I);
-    if ActCategories.IndexOf(ActionObj.ActionCategory)=-1 then
-      ActCategories.Add(ActionObj.ActionCategory);
+    FLoading := true;
+
+    {Die Memtable ist schon strukturell designed und hat die Tabellenstruktur wie
+     die Datenbank. Das gelieferte JSON geht da perfekt rein.
+     Noch besser wäre die Objekte gleich aus dem JSON zu erstellen.}
+    Response := FRESTClient.doGET('/actions', []);
+    FDMemTable1.Close;
+    FDMemTable1.Open;
+    FDMemTable1.AppendFromJSONArrayString(Response.BodyAsString);
+    ReadActionsREST(FDMemTable1);
+
+    FLoading := false;
   end;
 end;
 
@@ -276,7 +308,26 @@ end;
 
 procedure TActionManager.Action_InsertNew(AAction: TAM_Action);
 begin
-  ActionManagerDB.QUERY_InsertObject(CAM_Actions,AAction);
+  if ModusLocalDB then
+  begin
+    ActionManagerDB.QUERY_InsertObject(CAM_Actions,AAction);
+  end;
+
+  if ModusREST then
+  begin
+    AAction.Ident := Actions.GetFirstFreeIdent(CAM_Fldident);
+    FDMemTable1.Insert;
+    FDMemtable1.Fields[1].AsString := AAction.ActionName;
+    FDMemtable1.Fields[2].AsString := AAction.ActionCall;
+    FDMemtable1.Fields[3].AsString := AAction.ActionType;
+    FDMemtable1.Fields[4].AsString := AAction.ActionCategory;
+    FDMemtable1.Fields[5].AsDateTime := AAction.ActionCreated;
+    FDMemtable1.Fields[6].AsDateTime := AAction.ActionLastCall;
+    FDMemtable1.Fields[7].AsInteger := AAction.ActionCallCnt;
+
+    FDMemtable1.Post;
+  end;
+
   Actions.Insert(AAction);
 end;
 
@@ -284,22 +335,52 @@ procedure TActionManager.Action_CallExecuted(AAction: TAM_Action);
 begin
   AAction.ActionLastCall := Now;
   AAction.ActionCallCnt := AAction.ActionCallCnt + 1;
-  ActionManagerDB.QUERY_SaveObject(CAM_Actions,AAction);
+  Action_SaveAction(AAction);
 end;
 
 procedure TActionManager.Action_SaveAction(AAction: TAM_Action);
 begin
-  FDMemTable1.First;
-  while not FDMemTable1.Eof do
+  if ModusLocalDB then
   begin
-    if FDMemTable1.Fields[0].AsInteger = AAction.Ident then
-      break;
-    FDMemTable1.Next
+    ActionManagerDB.QUERY_SaveObject(CAM_Actions,AAction);
   end;
-  FDMemtable1.Edit;
-  FDMemtable1.Fields[1].AsString := AAction.ActionName;
-  FDMemtable1.Fields[2].AsString := AAction.ActionCall;
-  FDMemtable1.Post;
+
+  if ModusREST then
+  begin
+    if not int_MemTableFindAction(AAction) then
+      Exit;
+
+    FDMemtable1.Edit;
+
+    FDMemtable1.Fields[1].AsString := AAction.ActionName;
+    FDMemtable1.Fields[2].AsString := AAction.ActionCall;
+    FDMemtable1.Fields[3].AsString := AAction.ActionType;
+    FDMemtable1.Fields[4].AsString := AAction.ActionCategory;
+    FDMemtable1.Fields[5].AsDateTime := AAction.ActionCreated;
+    FDMemtable1.Fields[6].AsDateTime := AAction.ActionLastCall;
+    FDMemtable1.Fields[7].AsInteger := AAction.ActionCallCnt;
+
+    FDMemtable1.Post;
+  end;
+end;
+
+procedure TActionManager.Action_DeleteAction(AAction: TAM_Action);
+begin
+  if ModusLocalDB then
+  begin
+    ActionManagerDB.QUERY_DeleteObject(CAM_Actions,AAction);
+  end;
+
+  if ModusREST  then
+  begin
+    if not int_MemTableFindAction(AAction) then
+      Exit;
+
+    FDMemtable1.Delete;
+  end;
+
+  Actions.FreeI(AAction);
+
 end;
 
 function TActionManager.CheckFileExists(AFileName: string): boolean;
