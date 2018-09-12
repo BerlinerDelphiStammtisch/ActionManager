@@ -223,19 +223,24 @@ end;
 procedure TFrm_ActionManager.FormCreate(Sender: TObject);
 begin
   {Objekte erstellen}
-  FActionManager:=TActionManager.Create;
-  {Datenbank öffnen, die Datenbank wird mit dem Programmnamen im Programmverzeichnis erwartet}
-  FActionManager.ActionManagerDB.DBOpen(Format(CConnectMDB,[ChangeFileExt(ParamStr(0),'.mdb')]));
-
-  {Einstellungen von letzter Sitzung einlesen und setzen}
-  FActionManager.ReadActOptions(CAM_FldActName);
-  Edt_ActionCategory.Text:=FActionManager.GetLastCategory;
-  Edt_SearchName.Text:=FActionManager.GetLastName;
-
-  {Aus DB lesen, in Formularelemente bringen}
+  FActionManager := TActionManager.Create;
   FActionManager.ModusLocalDB := false;
   FActionManager.ModusREST := true;
+
+  {Datenbank öffnen, die Datenbank wird mit dem Programmnamen im Programmverzeichnis erwartet}
+  if FActionManager.ModusLocalDB then
+  begin
+    FActionManager.ActionManagerDB.DBOpen(Format(CConnectMDB,[ChangeFileExt(ParamStr(0),'.mdb')]));
+    {Einstellungen von letzter Sitzung einlesen und setzen}
+    FActionManager.ReadActOptions(CAM_FldActName);
+  end;
+
+  {Aus DB lesen, in Formularelemente bringen}
   FActionManager.ReadActions(CAM_FldActName);
+
+  Edt_ActionCategory.Text := FActionManager.GetLastCategory;
+  Edt_SearchName.Text := FActionManager.GetLastName;
+
   SetActionsToForm(FActionManager.Actions);
   SetCategoriesToForm;
   int_SetCategoryFromEdit;
@@ -270,7 +275,8 @@ begin
   if CmB_ActionCategory.ItemIndex>-1 then Category:=CmB_ActionCategory.Items[CmB_ActionCategory.ItemIndex]
                                      else Category:=EmptyStr;
   FActionManager.SaveOptions(Category,Edt_SearchName.Text);
-  FActionManager.ActionManagerDB.DBClose;
+  if FActionManager.ModusLocalDB then
+    FActionManager.ActionManagerDB.DBClose;
   FreeAndNil(FActionManager);
   {}
 end;
@@ -299,13 +305,17 @@ begin
   try
     for I:=0 to AActionCollection.Count-1 do
     begin
-      ActionObj:=AActionCollection.At(I);
+      ActionObj := AActionCollection.At(I);
+
+      {Datensatz überspringen, der Optionen enthält}
+      if ActionObj.Ident = FActionManager.OptRecordIdent then Continue;
+
       if ActionObj.Matches(SearchObj) then
       begin
-        ActionItem:=LVw_Actions.Items.Add;
-        ActionItem.Text:=ActionObj.ActionName;
-        ActionItem.Detail:=ActionObj.ActionCall;
-        ActionItem.Tag:=I;
+        ActionItem := LVw_Actions.Items.Add;
+        ActionItem.Text := ActionObj.ActionName;
+        ActionItem.Detail := ActionObj.ActionCall;
+        ActionItem.Tag := I;
 
         {Hauptfarbe je Kategorie, kann durch Dateityp s.u. überschrieben werden}
         if ActionObj.ActionType=TypExecFile then ActionItem.Objects.TextObject.TextColor:=TAlphaColorRec.Red

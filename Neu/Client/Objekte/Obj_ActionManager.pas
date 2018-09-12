@@ -16,6 +16,8 @@ type
         FLoading: Boolean;
         FModusLocalDB : boolean;
         FModusREST : boolean;
+        FHasOptRecord : boolean;
+        FOptRecordIdent : integer;
         procedure FDMemTable1BeforePost(DataSet: TDataSet);
         procedure FDMemTable1BeforeDelete(DataSet: TDataSet);
         function int_MemTableFindAction(AAction: TAM_Action): boolean;
@@ -49,8 +51,11 @@ type
         property ModusLocalDB: boolean read FModusLocalDB write FModusLocalDB;
         property ModusREST : boolean read FModusREST write FModusREST;
         property ActionTable : TFDMemTable read FDMemTable1;
+        property OptRecordIdent : integer read FOptRecordIdent;
         property RESTClient: TRESTClient read FRESTClient;
     end;
+
+const C_OptRecIndex = -1;
 
 implementation
 
@@ -58,6 +63,9 @@ uses Execute_Extended, Obj_Property, Obj_ActionOption, MVCFramework.DataSet.Util
 
 constructor TActionManager.Create;
 begin
+  {Daten haben einen Eintrag für Optionen}
+  FHasOptRecord := false;
+  {Objekte erstellen}
   ActionManagerDB:=TGeneralDB.Create;
   Strukturen:=TDB_Strukturen.Create;
   Actions:=TCollection_BasicObjects.Create(CAM_Actions);
@@ -198,6 +206,7 @@ procedure TActionManager.ReadActions(ASortField: string);
 var ActionObj : TAM_Action;
     Response: IRESTResponse;
     I : integer;
+    ActOptionObj : TAM_ActOption;
 begin
 
   if ModusLocalDB then
@@ -211,9 +220,28 @@ begin
       FreeAndNil(ActionObj);
     end;
 
+    {Alle geladenen Objekte durchlaufen
+      - Liste der verwendeten Kategorien erstellen
+      - Check, ob es einen 0-Datensatz gibt
+    }
     for I:=0 to Actions.Count-1 do
     begin
       ActionObj:=Actions.At(I);
+      {Datensatz mit letzten Sucheinstellungen?, Ident lässt sich nicht fixieren,
+       deshalb Erkennung über einen symbolischen Eintrag in ActionCallCnt}
+      if  (ActionObj.ActionCallCnt = C_OptRecIndex) then
+      begin
+        if not FHasOptRecord then
+          FHasOptRecord := true;
+        ActOptionObj:=TAM_ActOption.Create(CAM_Actions,Strukturen.GetTabStr(CAM_ActOptions).Structure);
+        ActOptions.Insert(ActOptionObj);
+        ActOptionObj.Ident := ActionObj.Ident;
+        ActOptionObj.ActionName := ActionObj.ActionName;
+        ActOptionObj.ActionCategory := ActionObj.ActionCategory;
+        {Ident merken -> nicht anzeigen}
+        FOptRecordIdent := ActionObj.Ident;
+      end;
+      {Kategorien aufsammeln}
       if ActCategories.IndexOf(ActionObj.ActionCategory)=-1 then
         ActCategories.Add(ActionObj.ActionCategory);
     end;
@@ -231,6 +259,31 @@ begin
     FDMemTable1.Open;
     FDMemTable1.AppendFromJSONArrayString(Response.BodyAsString);
     ReadActionsREST(FDMemTable1);
+
+    {Alle geladenen Objekte durchlaufen
+      - Liste der verwendeten Kategorien erstellen
+      - Check, ob es einen 0-Datensatz gibt
+    }
+    for I:=0 to Actions.Count-1 do
+    begin
+      ActionObj:=Actions.At(I);
+      {Datensatz mit letzten Sucheinstellungen?}
+      if  (ActionObj.ActionCallCnt = C_OptRecIndex) then
+      begin
+        if not FHasOptRecord then
+          FHasOptRecord := true;
+        ActOptionObj:=TAM_ActOption.Create(CAM_Actions,Strukturen.GetTabStr(CAM_ActOptions).Structure);
+        ActOptions.Insert(ActOptionObj);
+        ActOptionObj.Ident := ActionObj.Ident;
+        ActOptionObj.ActionName := ActionObj.ActionName;
+        ActOptionObj.ActionCategory := ActionObj.ActionCategory;
+        {Ident merken -> nicht anzeigen}
+        FOptRecordIdent := ActionObj.Ident;
+      end;
+      {Kategorien}
+      if ActCategories.IndexOf(ActionObj.ActionCategory)=-1 then
+        ActCategories.Add(ActionObj.ActionCategory);
+    end;
 
     FLoading := false;
   end;
@@ -285,13 +338,65 @@ end;
 
 procedure TActionManager.SaveOptions(ACategory, AName: string);
 var ActOptionObj : TAM_ActOption;
+    ActionObj : TAM_Action;
 begin
-  if ActOptions.Count>0 then
+  //if ActOptions.Count>0 then
   begin
+    {
     ActOptionObj:=ActOptions.At(0);
     ActOptionObj.ActionCategory:=ACategory;
     ActOptionObj.ActionName:=AName;
     ActionManagerDB.QUERY_SaveObject(CAM_ActOptions,ActOptionObj);
+    }
+    if ModusLocalDB then
+    begin
+      if FHasOptRecord then
+      begin
+        ActionObj := Actions.FindByPropertyValue(CAM_Fldident,'0');
+        if ActionObj <> nil  then
+        begin
+          ActionObj.ActionName := AName;
+          ActionObj.ActionCategory := ACategory;
+          ActionManagerDB.QUERY_SaveObject(CAM_Actions,ActionObj);
+        end;
+      end else begin
+        ActionObj := TAM_Action.Create(CAM_Actions,Strukturen.GetTabStr(CAM_Actions).Structure);
+        ActionObj.Ident := 0;
+        ActionObj.ActionName := AName;
+        ActionObj.ActionCategory := ACategory;
+        ActionObj.ActionCallCnt := C_OptRecIndex;
+        Actions.Insert(ActionObj);
+        ActionManagerDB.QUERY_InsertObject(CAM_Actions,ActionObj);
+      end;
+    end;
+
+    if ModusREST then
+    begin
+      if FHasOptRecord then
+      begin
+        ActionObj := Actions.FindByPropertyValue(CAM_Fldident,FOptRecordIdent.ToString);
+        int_MemTableFindAction(ActionObj);
+
+        FDMemtable1.Edit;
+        FDMemtable1.Fields[1].AsString := AName;
+        FDMemtable1.Fields[4].AsString := ACategory;
+        FDMemtable1.Post;
+      end else begin
+        ActionObj := TAM_Action.Create(CAM_Actions,Strukturen.GetTabStr(CAM_Actions).Structure);
+        ActionObj.Ident := C_OptRecIndex;
+        ActionObj.ActionName := AName;
+        ActionObj.ActionCategory := ACategory;
+        ActionObj.ActionCallCnt := C_OptRecIndex;
+        Actions.Insert(ActionObj);
+
+        FDMemTable1.Insert;
+        FDMemtable1.Fields[0].AsInteger := ActionObj.Ident;
+        FDMemtable1.Fields[1].AsString := ActionObj.ActionName;
+        FDMemtable1.Fields[4].AsString := ActionObj.ActionCategory;
+        FDMemtable1.Post;
+
+      end;
+    end;
   end;
 end;
 
