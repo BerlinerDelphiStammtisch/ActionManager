@@ -12,6 +12,9 @@
         <Projects Include="RESTServer\ActionManRESTserver.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="RESTService\RestService.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -47,14 +50,23 @@
     <Target Name="ActionManRESTserver:Make">
         <MSBuild Projects="RESTServer\ActionManRESTserver.dproj" Targets="Make"/>
     </Target>
+    <Target Name="RestService">
+        <MSBuild Projects="RESTService\RestService.dproj"/>
+    </Target>
+    <Target Name="RestService:Clean">
+        <MSBuild Projects="RESTService\RestService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="RestService:Make">
+        <MSBuild Projects="RESTService\RestService.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="ActionManager;ActionManClient;ActionManRESTserver"/>
+        <CallTarget Targets="ActionManager;ActionManClient;ActionManRESTserver;RestService"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="ActionManager:Clean;ActionManClient:Clean;ActionManRESTserver:Clean"/>
+        <CallTarget Targets="ActionManager:Clean;ActionManClient:Clean;ActionManRESTserver:Clean;RestService:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="ActionManager:Make;ActionManClient:Make;ActionManRESTserver:Make"/>
+        <CallTarget Targets="ActionManager:Make;ActionManClient:Make;ActionManRESTserver:Make;RestService:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

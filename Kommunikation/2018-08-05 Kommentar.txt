@@ -1,0 +1,23 @@
+Ich habe als erste Annäherung die Methode aus dem WinClient übernommen.
+Erstmal startet das Programm mit dem bisherigen Laden aus der lokalen Access-Datenbank.
+Wenn es gestartet ist und der REST-Server läuft kann man mit Ctrl-T den Inhalt der Liste löschen und stattdessen die Daten vom REST-Server laden.
+Geht. Als nächstes soll das Bearbeiten und Updaten funktionieren.
+Ich habe habe deshalb ein Edit und Post an der MemTable eingeführt sowie eine Ereignisbehandlung BeforePost auch an der MemTable.
+Durch debuggen sehe ich auch, dass das bearbeitete Objekt auf dem Server datentechnisch ankommt.
+Dann geht etwas schief.
+
+Hier das Serverprotokoll:
+
+2018-08-05 21:10:54:512  [TID 5088    ][INFO    ] Default Logger initialized [dmvcframework]
+2018-08-05 21:10:54:512  [TID 5088    ][INFO    ] Server started on port 54711 [dmvcframework]
+2018-08-05 21:11:24:142  [TID 15832   ][INFO    ] ENTER: Config default values [dmvcframework]
+2018-08-05 21:11:24:142  [TID 15832   ][INFO    ] EXIT: Config default values [dmvcframework]
+2018-08-05 21:11:24:142  [TID 15832   ][INFO    ] >> Custom configuration method [dmvcframework]
+2018-08-05 21:11:24:142  [TID 15832   ][INFO    ] << Custom configuration method [dmvcframework]
+2018-08-05 21:11:24:142  [TID 15832   ][INFO    ] ENTER: LoadSystemControllers [dmvcframework]
+2018-08-05 21:11:24:142  [TID 15832   ][INFO    ] EXIT: LoadSystemControllers [dmvcframework]
+2018-08-05 21:11:28:426  [TID 15832   ][INFO    ] GET:/actions -> uActionManController.TActionManController - 200 OK [dmvcframework]
+2018-08-05 21:11:42:587  [TID 17072   ][ERROR   ] [EFDException] [FireDAC][Phys][SQLite]-335. Datentyp des Parameters [NEW_ACTION_NAME] ist unbekannt. Hinweis: Geben Sie TFDParam.DataType an, oder weisen Sie den TFDParam-Wert vor dem "Prepare"/"Execute"-Aufruf zu (Custom message: "Global Action Exception Handler") [dmvcframework]
+2018-08-05 21:11:44:299  [TID 17072   ][INFO    ] PUT:/actions/4 -> uActionManController.TActionManController - 500  [dmvcframework]
+
+Da ist also nocht etwas Tuning notwendig.

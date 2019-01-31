@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{EB57F91D-1822-4AD7-A76A-DA078954E518}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ActionManRESTserver.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\RESTService\RestService.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ActionManRESTserver">
+        <MSBuild Projects="ActionManRESTserver.dproj"/>
+    </Target>
+    <Target Name="ActionManRESTserver:Clean">
+        <MSBuild Projects="ActionManRESTserver.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ActionManRESTserver:Make">
+        <MSBuild Projects="ActionManRESTserver.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="RestService">
+        <MSBuild Projects="..\RESTService\RestService.dproj"/>
+    </Target>
+    <Target Name="RestService:Clean">
+        <MSBuild Projects="..\RESTService\RestService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="RestService:Make">
+        <MSBuild Projects="..\RESTService\RestService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ActionManRESTserver;RestService"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ActionManRESTserver:Clean;RestService:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ActionManRESTserver:Make;RestService:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

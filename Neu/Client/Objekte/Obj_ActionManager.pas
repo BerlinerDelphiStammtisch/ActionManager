@@ -103,22 +103,26 @@ begin
       DataType := ftString;
       Size := 50;
     end;
+    {[4]}
     with AddFieldDef do
     begin
       Name := 'action_category';
       DataType := ftString;
       Size := 254;
     end;
+    {[5]}
     with AddFieldDef do
     begin
       Name := 'action_created';
       DataType := ftDateTime;
     end;
+    {[6]}
     with AddFieldDef do
     begin
       Name := 'action_lastcall';
       DataType := ftDateTime;
     end;
+    {[7]}
     with AddFieldDef do
     begin
       Name := 'action_callcnt';
@@ -391,8 +395,9 @@ begin
 
         FDMemTable1.Insert;
         FDMemtable1.Fields[0].AsInteger := ActionObj.Ident;
-        FDMemtable1.Fields[1].AsString := ActionObj.ActionName;
-        FDMemtable1.Fields[4].AsString := ActionObj.ActionCategory;
+        FDMemtable1.Fields[1].AsString  := ActionObj.ActionName;
+        FDMemtable1.Fields[4].AsString  := ActionObj.ActionCategory;
+        FDMemtable1.Fields[7].AsInteger := C_OptRecIndex;
         FDMemtable1.Post;
 
       end;
