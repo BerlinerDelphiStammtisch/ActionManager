@@ -70,6 +70,13 @@ begin
   FDM := TActionManDataModule.Create(nil);
 end;
 
+procedure TActionManController.OnAfterAction(Context: TWebContext; const AActionName: string);
+begin
+  { Executed after each action }
+  FDM.Free;
+  inherited;
+end;
+
 procedure TActionManController.SaveAction(ctx: TWebContext);
 var
   lAction: TAMAction;
@@ -97,12 +104,6 @@ begin
   Render(200, 'Action updated');
 end;
 
-procedure TActionManController.OnAfterAction(Context: TWebContext; const AActionName: string);
-begin
-  { Executed after each action }
-  FDM.DisposeOf;
-  inherited;
-end;
 
 procedure TActionManController.Index;
 begin

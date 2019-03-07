@@ -2,7 +2,7 @@ program RestService;
 
 uses
   Vcl.SvcMgr,
-  RestService_Unit in 'RestService_Unit.pas' {Service1: TService},
+  RestService_Unit in 'RestService_Unit.pas' {ServiceActMan: TService},
   uActionMan.ServerStart in '..\Source\uActionMan.ServerStart.pas',
   uActionManActionObj in '..\Source\uActionManActionObj.pas',
   uActionManController in '..\Source\uActionManController.pas',
@@ -28,7 +28,7 @@ begin
   //
   if not Application.DelayInitialize or Application.Installing then
     Application.Initialize;
-  Application.CreateForm(TService1, Service1);
+  Application.CreateForm(TServiceActMan, ServiceActMan);
   Application.CreateForm(TActionManDataModule, ActionManDataModule);
   Application.Run;
 end.

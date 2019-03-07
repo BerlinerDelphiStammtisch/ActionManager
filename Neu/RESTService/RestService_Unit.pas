@@ -7,7 +7,7 @@ uses
   Vcl.SvcMgr;
 
 type
-  TService1 = class(TService)
+  TServiceActMan = class(TService)
     procedure ServiceStart(Sender: TService; var Started: Boolean);
     procedure ServiceStop(Sender: TService; var Stopped: Boolean);
   private
@@ -18,7 +18,7 @@ type
   end;
 
 var
-  Service1: TService1;
+  ServiceActMan: TServiceActMan;
 
 implementation
 
@@ -28,20 +28,20 @@ uses uActionMan.ServerStart;
 
 procedure ServiceController(CtrlCode: DWord); stdcall;
 begin
-  Service1.Controller(CtrlCode);
+  ServiceActMan.Controller(CtrlCode);
 end;
 
-function TService1.GetServiceController: TServiceController;
+function TServiceActMan.GetServiceController: TServiceController;
 begin
   Result := ServiceController;
 end;
 
-procedure TService1.ServiceStart(Sender: TService; var Started: Boolean);
+procedure TServiceActMan.ServiceStart(Sender: TService; var Started: Boolean);
 begin
   RunServerAsService(54711);
 end;
 
-procedure TService1.ServiceStop(Sender: TService; var Stopped: Boolean);
+procedure TServiceActMan.ServiceStop(Sender: TService; var Stopped: Boolean);
 begin
   StopServer;
 end;

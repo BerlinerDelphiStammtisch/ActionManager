@@ -20,12 +20,14 @@ type
     qryAction: TFDQuery;
     updAction: TFDUpdateSQL;
     FDTransaction1: TFDTransaction;
+    procedure DataModuleDestroy(Sender: TObject);
     procedure FDConnection1AfterConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private-Deklarationen }
   public
     { Public-Deklarationen }
+    function GetDatabaseName: String;
     function FindAMAction(Search: string): TDataSet;
     function GetAMActionById(id: Integer): TDataSet;
     procedure DeleteAMAction(id: Integer);
@@ -37,16 +39,32 @@ var
   ActionManDataModule: TActionManDataModule;
 
 implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
 uses
-  MVCFramework.FireDAC.Utils;
+  MVCFramework.FireDAC.Utils, System.IOUtils;
 
 {%CLASSGROUP 'System.Classes.TPersistent'}
 
 {$R *.dfm}
 
+
+
 procedure TActionManDataModule.DataModuleCreate(Sender: TObject);
 begin
-  FDConnection1.Params.Database := '..\..\Database\ActionManager.db';
+  FDConnection1.Params.Database := GetDatabaseName;
+  FDConnection1.Connected := true;
+end;
+
+procedure TActionManDataModule.DataModuleDestroy(Sender: TObject);
+begin
+  FDConnection1.Connected := false;
+end;
+
+function TActionManDataModule.GetDatabaseName: String;
+begin
+  Result := TPath.GetDirectoryName(ParamStr(0));
+  Result := Result + PathDelim + 'Database' + PathDelim + 'actionmanager.db';
 end;
 
 procedure TActionManDataModule.FDConnection1AfterConnect(Sender: TObject);

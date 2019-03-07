@@ -1,6 +1,7 @@
 object ActionManDataModule: TActionManDataModule
   OldCreateOrder = False
   OnCreate = DataModuleCreate
+  OnDestroy = DataModuleDestroy
   Height = 312
   Width = 577
   object FDConnection1: TFDConnection
